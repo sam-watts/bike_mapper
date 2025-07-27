@@ -1,0 +1,15 @@
+{
+  "name": "mapbox-frontend-app",
+  "version": "1.0.0",
+  "description": "This project is a web application that utilizes Mapbox to display a map and allows users to select linestrings from a geoparquet file. It provides functionality to set start and end points for route generation via a placeholder HTTP endpoint.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mapbox-gl": "^3.11.0"
+  }
+}

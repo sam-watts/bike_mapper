@@ -1,0 +1,8 @@
+cache
+*/data/*
+dev_cache
+node_modules
+data/
+__pycache__
+*.log
+.DS_Store
