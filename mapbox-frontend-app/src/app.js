@@ -64,8 +64,14 @@ function loadCycleways() {
             data.features.forEach((feature, index) => {
                 feature.id = feature.properties.id; // get the osmid from properties
             });
-            console.log(data)
-            map.getSource('cycleways').setData(data);
+
+            // Filter features to only show those defined in groupedPaths
+            const filteredData = filterCyclewaysByGroupedPaths(data);
+            console.log('Original features:', data.features.length);
+            console.log('Filtered features:', filteredData.features.length);
+            console.log('Filtered data:', filteredData);
+
+            map.getSource('cycleways').setData(filteredData);
         });
 
     // Add a single layer for all the lines
@@ -89,6 +95,40 @@ function loadCycleways() {
             'line-width': 2.5
         }
     });
+}
+
+function getAllIdsFromGroupedPaths() {
+    const allIds = new Set();
+
+    if (!groupedPaths || !groupedPaths.paths) {
+        return allIds;
+    }
+
+    // Extract IDs from all path groups
+    Object.keys(groupedPaths.paths).forEach(pathKey => {
+        const ids = extractIdsFromPath(pathKey);
+        ids.forEach(id => allIds.add(id));
+    });
+
+    return allIds;
+}
+
+function filterCyclewaysByGroupedPaths(geojsonData) {
+    const allowedIds = getAllIdsFromGroupedPaths();
+
+    if (allowedIds.size === 0) {
+        // If no grouped paths are loaded yet, return original data
+        return geojsonData;
+    }
+
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        return allowedIds.has(feature.id);
+    });
+
+    return {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
 }
 
 function loadGroupedPaths() {
@@ -160,8 +200,8 @@ function populatePathGroupsDropdown() {
 }
 
 map.on('load', () => {
-    loadCycleways();
     loadGroupedPaths();
+    loadCycleways();
 });
 
 let hoveredFeatureId = null;
