@@ -208,8 +208,21 @@ function setEnd() {
     });
 }
 
+function deselectAllRoutes() {
+    // Deselect all features and clear the features array
+    features.forEach(feature => {
+        map.setFeatureState(
+            { source: 'cycleways', id: feature.id },
+            { selected: false }
+        );
+    });
+    features.length = 0; // Clear the array
+    console.log('All routes deselected');
+}
+
 document.getElementById("setStart").onclick = setStart;
 document.getElementById("setEnd").onclick = setEnd;
+document.getElementById("deselectAll").onclick = deselectAllRoutes;
 document.getElementById("generateRoute").onclick = () => {
     if (startPoint && endPoint) {
         const generateButton = document.getElementById("generateRoute");

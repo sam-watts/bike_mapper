@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,22 +9,25 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet" />
 </head>
+
 <body>
     <div id="map"></div>
     <div id="controls">
-        <button id="setStart" >Set Start Point</button>
+        <button id="setStart">Set Start Point</button>
         <button id="setEnd">Set End Point</button>
         <button id="generateRoute" onclick="generateRoute();">Generate Route</button>
+        <button id="deselectAll">Deselect All Routes</button>
         <label for="slider">Preference for following: <span id="sliderValue">2 </span></label>
         <input type="range" id="slider" min="1" max="10" value="2">
         <script>
             const slider = document.getElementById('slider');
             const sliderValue = document.getElementById('sliderValue');
-            slider.addEventListener('input', function() {
-            sliderValue.textContent = this.value;
+            slider.addEventListener('input', function () {
+                sliderValue.textContent = this.value;
             });
         </script>
     </div>
     <script src="app.js"></script>
 </body>
+
 </html>
