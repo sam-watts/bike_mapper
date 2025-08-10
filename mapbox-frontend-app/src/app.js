@@ -1,5 +1,5 @@
 const mapboxAccessToken = 'pk.eyJ1Ijoic3dhdHRzdGd0ZyIsImEiOiJja3lvNmc5a28zMXA2MnVxcHlheGl2NWF3In0.nFWaW9_LluRnEjdPaMlAjw';
-const generateRouteUrl = 'http://127.0.0.1:5000/generate_route'; // Replace with your actual API endpoint
+const generateRouteUrl = 'http://127.0.0.1:8000/generate_route'; // Replace with your actual API endpoint
 mapboxgl.accessToken = mapboxAccessToken;
 
 const map = new mapboxgl.Map({
@@ -53,7 +53,7 @@ function loadCycleways() {
         }
     });
 
-    fetch('../data/cycleways.geojson')
+    fetch('data/cycleways.geojson')
     .then(response => response.json())
     .then(data => {
         data.features.forEach((feature, index) => {
