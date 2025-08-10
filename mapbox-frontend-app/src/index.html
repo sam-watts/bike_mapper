@@ -17,6 +17,12 @@
         <button id="setEnd">Set End Point</button>
         <button id="generateRoute" onclick="generateRoute();">Generate Route</button>
         <button id="deselectAll">Deselect All Routes</button>
+        <div>
+            <label for="pathGroups">Select Path Group:</label>
+            <select id="pathGroups">
+                <option value="">-- Select a path group --</option>
+            </select>
+        </div>
         <label for="slider">Preference for following: <span id="sliderValue">2 </span></label>
         <input type="range" id="slider" min="1" max="10" value="2">
         <script>

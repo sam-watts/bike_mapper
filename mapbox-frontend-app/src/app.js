@@ -36,6 +36,7 @@ map.on('style.load', () => {
 const features = []; // Array to store features
 let startPoint = null;
 let endPoint = null;
+let groupedPaths = {}; // Store the grouped paths data
 
 const geojsonLayer = {
     type: 'FeatureCollection',
@@ -86,8 +87,39 @@ function loadCycleways() {
     });
 }
 
+function loadGroupedPaths() {
+    fetch('data/grouped_paths.json')
+        .then(response => response.json())
+        .then(data => {
+            groupedPaths = data;
+            populatePathGroupsDropdown(groupedPaths);
+        })
+        .catch(error => {
+            console.error('Error loading grouped paths:', error);
+        });
+}
+
+function populatePathGroupsDropdown(groupedPaths) {
+    const dropdown = document.getElementById('pathGroups');
+
+    // Clear existing options except the first one
+    while (dropdown.children.length > 1) {
+        dropdown.removeChild(dropdown.lastChild);
+    }
+
+    // Add options for each path group
+    Object.keys(groupedPaths).forEach(groupKey => {
+        const option = document.createElement('option');
+        option.value = groupKey;
+        // Convert underscore-separated keys to readable labels
+        option.textContent = groupKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        dropdown.appendChild(option);
+    });
+}
+
 map.on('load', () => {
     loadCycleways();
+    loadGroupedPaths();
 });
 
 let hoveredFeatureId = null;
@@ -220,9 +252,61 @@ function deselectAllRoutes() {
     console.log('All routes deselected');
 }
 
+function selectPathGroup(groupKey) {
+    if (!groupKey || !groupedPaths[groupKey]) {
+        return;
+    }
+
+    const pathGroup = groupedPaths[groupKey];
+
+    // Extract all IDs from the group (handling both flat arrays and nested arrays)
+    const idsToSelect = [];
+
+    if (Array.isArray(pathGroup)) {
+        pathGroup.forEach(item => {
+            if (Array.isArray(item)) {
+                // Nested array case (like st_andrews_square_to_picardy_place)
+                item.forEach(subItem => {
+                    if (subItem.id) {
+                        idsToSelect.push(subItem.id);
+                    }
+                });
+            } else if (item.id) {
+                // Flat array case (like leith_walk)
+                idsToSelect.push(item.id);
+            }
+        });
+    }
+
+    // Add these IDs to the features array and select them on the map
+    idsToSelect.forEach(id => {
+        // Check if this ID is not already selected
+        const existingFeature = features.find(feature => feature.id === id);
+        if (!existingFeature) {
+            features.push({
+                id: id,
+                coordinates: null // We don't have coordinates from grouped_paths, but that's okay
+            });
+
+            map.setFeatureState(
+                { source: 'cycleways', id: id },
+                { selected: true }
+            );
+        }
+    });
+
+    console.log(`Selected path group: ${groupKey}`, features);
+}
+
 document.getElementById("setStart").onclick = setStart;
 document.getElementById("setEnd").onclick = setEnd;
 document.getElementById("deselectAll").onclick = deselectAllRoutes;
+document.getElementById("pathGroups").onchange = function () {
+    const selectedGroup = this.value;
+    if (selectedGroup) {
+        selectPathGroup(selectedGroup);
+    }
+};
 document.getElementById("generateRoute").onclick = () => {
     if (startPoint && endPoint) {
         const generateButton = document.getElementById("generateRoute");
