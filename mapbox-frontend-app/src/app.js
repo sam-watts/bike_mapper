@@ -290,10 +290,13 @@ function generateRoute(start, end, preferredRoutes, followingWeight) {
 
         // Handle the new response format
         if (data.geojson) {
+            // Store route data for GPX export
+            currentRouteGeoJSON = data.geojson;
             map.getSource('route').setData(data.geojson);
             showRouteInfo(data.distance_meters, data.travel_time_seconds);
         } else {
             // Fallback for old format
+            currentRouteGeoJSON = data;
             map.getSource('route').setData(data);
         }
     }).catch(error => {
@@ -359,8 +362,85 @@ function clearRoute() {
         features: []
     });
 
+    // Clear stored route data
+    currentRouteGeoJSON = null;
+
     // Hide the route info panel
     hideRouteInfo();
+}
+
+// Global variable to store current route data for GPX export
+let currentRouteGeoJSON = null;
+
+function exportRouteAsGPX() {
+    if (!currentRouteGeoJSON || !currentRouteGeoJSON.features || currentRouteGeoJSON.features.length === 0) {
+        alert('No route available to export. Please generate a route first.');
+        return;
+    }
+
+    const gpxContent = convertGeoJSONToGPX(currentRouteGeoJSON);
+    downloadGPXFile(gpxContent);
+}
+
+function convertGeoJSONToGPX(geojson) {
+    const now = new Date().toISOString();
+    let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Bike Mapper" xmlns="http://www.topografix.com/GPX/1/1">
+    <metadata>
+        <name>Bike Route</name>
+        <desc>Generated bike route from Bike Mapper</desc>
+        <time>${now}</time>
+    </metadata>
+    <trk>
+        <name>Bike Route</name>
+        <type>cycling</type>
+        <trkseg>`;
+
+    // Extract coordinates from all LineString features
+    geojson.features.forEach(feature => {
+        if (feature.geometry && feature.geometry.type === 'LineString') {
+            feature.geometry.coordinates.forEach(coord => {
+                const [lon, lat] = coord;
+                gpx += `
+            <trkpt lat="${lat}" lon="${lon}"></trkpt>`;
+            });
+        } else if (feature.geometry && feature.geometry.type === 'MultiLineString') {
+            feature.geometry.coordinates.forEach(lineString => {
+                lineString.forEach(coord => {
+                    const [lon, lat] = coord;
+                    gpx += `
+            <trkpt lat="${lat}" lon="${lon}"></trkpt>`;
+                });
+            });
+        }
+    });
+
+    gpx += `
+        </trkseg>
+    </trk>
+</gpx>`;
+
+    return gpx;
+}
+
+function downloadGPXFile(gpxContent) {
+    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `bike-route-${timestamp}.gpx`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
 }
 
 
@@ -664,6 +744,7 @@ document.getElementById("setStartManual").onclick = setStart;
 document.getElementById("setEndManual").onclick = setEnd;
 document.getElementById("deselectAll").onclick = deselectAllRoutes;
 document.getElementById("clearRoute").onclick = clearRoute;
+document.getElementById("exportGpx").onclick = exportRouteAsGPX;
 document.getElementById("pathGroups").onchange = function () {
     const selectedGroup = this.value;
     if (selectedGroup) {

@@ -320,6 +320,35 @@ body {
     font-size: 14px;
 }
 
+.route-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.export-gpx-btn {
+    width: 100%;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin: 0;
+}
+
+.export-gpx-btn:hover {
+    background-color: #218838;
+}
+
+.export-gpx-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
 /* Generic destructive button styles */
 button.destructive-btn {
     background: #dc3545 !important;
