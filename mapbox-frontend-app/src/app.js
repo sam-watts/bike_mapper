@@ -366,6 +366,19 @@ function clearRoute() {
     // Clear stored route data
     currentRouteGeoJSON = null;
 
+    // Clear markers
+    if (startPoint !== null) {
+        startPoint.remove();
+        startPoint = null;
+    }
+    if (endPoint !== null) {
+        endPoint.remove();
+        endPoint = null;
+    }
+
+    // Clear search inputs
+    clearSearchInputs();
+
     // Hide the route info panel
     hideRouteInfo();
 }
@@ -455,6 +468,10 @@ function setStart() {
             .setLngLat(e.lngLat.toArray())
             .addTo(map);
         map.getCanvas().style.cursor = ''; // Reset cursor
+
+        // Clear the start search input since user manually placed point
+        const startInput = document.getElementById('startSearch');
+        if (startInput) startInput.value = '';
     });
 }
 
@@ -468,6 +485,10 @@ function setEnd() {
             .setLngLat(e.lngLat.toArray())
             .addTo(map);
         map.getCanvas().style.cursor = ''; // Reset cursor
+
+        // Clear the end search input since user manually placed point
+        const endInput = document.getElementById('endSearch');
+        if (endInput) endInput.value = '';
     });
 }
 
@@ -741,6 +762,21 @@ function hideSearchResults(resultsContainer) {
     resultsContainer.style.display = 'none';
 }
 
+function clearSearchInputs() {
+    const startInput = document.getElementById('startSearch');
+    const endInput = document.getElementById('endSearch');
+
+    if (startInput) startInput.value = '';
+    if (endInput) endInput.value = '';
+
+    // Also hide any open search results
+    const startResults = document.getElementById('startSearchResults');
+    const endResults = document.getElementById('endSearchResults');
+
+    if (startResults) hideSearchResults(startResults);
+    if (endResults) hideSearchResults(endResults);
+}
+
 document.getElementById("setStartManual").onclick = setStart;
 document.getElementById("setEndManual").onclick = setEnd;
 document.getElementById("deselectAll").onclick = deselectAllRoutes;
@@ -787,4 +823,5 @@ document.getElementById("generateRoute").onclick = () => {
 // Initialize search functionality when the page loads
 document.addEventListener('DOMContentLoaded', function () {
     setupSearchInputs();
+    clearSearchInputs(); // Ensure inputs start empty
 });
