@@ -129,7 +129,7 @@ function populatePathGroupsDropdown() {
             });
         });
     }
-
+    // TODO - remove separator and make non-hierarchical paths sorted alphabetically
     // Add a separator
     if (groupedPaths.hierarchy && groupedPaths.paths) {
         const separator = document.createElement('option');
@@ -243,12 +243,80 @@ function generateRoute(start, end, preferredRoutes, followingWeight) {
         return response.json();
     }).then(data => {
         console.log("Route data:", data);
-        map.getSource('route').setData(data);
+
+        // Handle the new response format
+        if (data.geojson) {
+            map.getSource('route').setData(data.geojson);
+            showRouteInfo(data.distance_meters, data.travel_time_seconds);
+        } else {
+            // Fallback for old format
+            map.getSource('route').setData(data);
+        }
     }).catch(error => {
         console.error('Error generating route:', error);
         alert('Error generating route. Please check if the backend server is running.');
     });
+}
 
+function showRouteInfo(distanceMeters, travelTimeSeconds) {
+    console.log("showRouteInfo called with:", distanceMeters, travelTimeSeconds);
+    const routeInfoPanel = document.getElementById('routeInfo');
+    const distanceElement = document.getElementById('routeDistance');
+    const timeElement = document.getElementById('routeTime');
+
+    console.log("Panel element:", routeInfoPanel);
+    console.log("Distance element:", distanceElement);
+    console.log("Time element:", timeElement);
+
+    // Format distance
+    let distanceText;
+    if (distanceMeters >= 1000) {
+        distanceText = `${(distanceMeters / 1000).toFixed(1)} km`;
+    } else {
+        distanceText = `${Math.round(distanceMeters)} m`;
+    }
+
+    // Format time
+    let timeText;
+    if (travelTimeSeconds >= 3600) {
+        const hours = Math.floor(travelTimeSeconds / 3600);
+        const minutes = Math.round((travelTimeSeconds % 3600) / 60);
+        timeText = `${hours}h ${minutes}m`;
+    } else if (travelTimeSeconds >= 60) {
+        const minutes = Math.round(travelTimeSeconds / 60);
+        timeText = `${minutes} min`;
+    } else {
+        timeText = `${Math.round(travelTimeSeconds)} sec`;
+    }
+
+    console.log("Formatted distance:", distanceText);
+    console.log("Formatted time:", timeText);
+
+    // Update the display
+    distanceElement.textContent = distanceText;
+    timeElement.textContent = timeText;
+
+    // Show the panel
+    console.log("Removing hidden class...");
+    console.log("Panel classes before:", routeInfoPanel.className);
+    routeInfoPanel.classList.remove('hidden');
+    console.log("Panel classes after:", routeInfoPanel.className);
+}
+
+function hideRouteInfo() {
+    const routeInfoPanel = document.getElementById('routeInfo');
+    routeInfoPanel.classList.add('hidden');
+}
+
+function clearRoute() {
+    // Clear the route from the map
+    map.getSource('route').setData({
+        type: 'FeatureCollection',
+        features: []
+    });
+
+    // Hide the route info panel
+    hideRouteInfo();
 }
 
 
@@ -364,6 +432,7 @@ function extractIdsFromPath(pathKey) {
 document.getElementById("setStart").onclick = setStart;
 document.getElementById("setEnd").onclick = setEnd;
 document.getElementById("deselectAll").onclick = deselectAllRoutes;
+document.getElementById("clearRoute").onclick = clearRoute;
 document.getElementById("pathGroups").onchange = function () {
     const selectedGroup = this.value;
     if (selectedGroup) {

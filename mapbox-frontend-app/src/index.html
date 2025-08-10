@@ -16,7 +16,7 @@
         <button id="setStart">Set Start Point</button>
         <button id="setEnd">Set End Point</button>
         <button id="generateRoute" onclick="generateRoute();">Generate Route</button>
-        <button id="deselectAll">Deselect All Routes</button>
+        <button id="deselectAll" class="destructive-btn">Deselect All Routes</button>
         <div>
             <label for="pathGroups">Select Path Group:</label>
             <select id="pathGroups">
@@ -33,6 +33,25 @@
             });
         </script>
     </div>
+
+    <!-- Route Info Panel -->
+    <div id="routeInfo" class="route-info hidden">
+        <div class="route-info-header">
+            <h3>Route Information</h3>
+            <button id="clearRoute" class="clear-route-btn destructive-btn">✕</button>
+        </div>
+        <div class="route-stats">
+            <div class="stat-item">
+                <span class="stat-label">Distance:</span>
+                <span id="routeDistance" class="stat-value">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Travel Time:</span>
+                <span id="routeTime" class="stat-value">-</span>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 

@@ -14,7 +14,7 @@ from copy import deepcopy
 from contextlib import asynccontextmanager
 from collections import defaultdict
 
-BASE_SPEED_KPH = 10
+BASE_SPEED_KPH = 5
 PLACE_NAME = "Edinburgh, Scotland"
 CACHE_GRAPH = True
 WEB_MERCARTOR_CRS = 3857
@@ -82,15 +82,24 @@ app.add_middleware(
 async def generate_route(request: RouteRequest):
     logger.info(f"Received route request: {request}")
     # Placeholder logic for generating a route
-    route = get_route(
+    route_data = get_route(
         request.start,
         request.end,
         GRAPH,
         request.following_weight,
         request.preferred_routes,
     )
-    route = route.dissolve()
-    return json.loads(route[["geometry"]].to_json())
+    route_gdf = route_data["route_gdf"].dissolve()
+    geojson_data = json.loads(route_gdf[["geometry"]].to_json())
+
+    # Add route metrics to the response
+    response = {
+        "geojson": geojson_data,
+        "distance_meters": route_data["distance_meters"],
+        "travel_time_seconds": route_data["travel_time_seconds"],
+    }
+
+    return response
 
 
 def get_graph_lookup(graph):
@@ -118,6 +127,10 @@ def get_graph(place_name: str, base_speed_kph: int):
     )
     ox.routing.add_edge_speeds(graph, fallback=base_speed_kph)
     ox.routing.add_edge_travel_times(graph)
+    for u, v, k, data in graph.edges(keys=True, data=True):
+        data["original_travel_time"] = data["travel_time"]
+    # NOTE - likely need to project back if using this line
+    # graph = ox.projection.project_graph(graph)
     return graph, get_graph_lookup(graph)
 
 
@@ -131,7 +144,7 @@ def get_route(
 
     if preferred_routes is not None:
         graph = deepcopy(graph)
-        logger.info(f"Preferred routes: {preferred_routes}")
+        logger.debug(f"Preferred routes: {preferred_routes}")
 
         mapped_edges = (
             pd.Series(preferred_routes).astype(int).map(GRAPH_LOOKUP).dropna()
@@ -141,9 +154,9 @@ def get_route(
             for route in preferred_routes
             for edge in GRAPH_LOOKUP.get(int(route), [])
         ]
-        print(f"Mapped edges:\n {mapped_edges}")
+        logger.debug(f"Mapped edges:\n {mapped_edges}")
         speedy_routes = {x: following_weight * BASE_SPEED_KPH for x in mapped_edges}
-        logger.info(f"Speedy routes: {speedy_routes}")
+        logger.debug(f"Speedy routes: {speedy_routes}")
         nx.set_edge_attributes(graph, speedy_routes, "speed_kph")
         graph = ox.routing.add_edge_travel_times(
             graph
@@ -151,9 +164,11 @@ def get_route(
         # check that we've set the attributes correctly
         for k, v in speedy_routes.items():
             if k in graph.edges:
-                logger.info(f"speed_kph for edge {k}: {graph.edges[k]['speed_kph']}")
-                logger.info(f"travel time for edge {k}: {graph.edges[k]['travel_time']}")
-                logger.info(f"edge data: {graph.edges[k]}")
+                logger.debug(f"speed_kph for edge {k}: {graph.edges[k]['speed_kph']}")
+                logger.debug(
+                    f"travel time for edge {k}: {graph.edges[k]['travel_time']}"
+                )
+                logger.debug(f"edge data: {graph.edges[k]}")
 
     start_node = ox.distance.nearest_nodes(
         graph,
@@ -175,9 +190,19 @@ def get_route(
     )
     route_gdf = ox.routing.route_to_gdf(graph, route)
     route_gdf["name_ref"] = None
-    logger.info(
-        f"Route length: {int(route_gdf.to_crs(route_gdf.estimate_utm_crs()).length.sum())} meters"
-    )
-    ox.routing.utils.settings.all_oneway
-    logger
-    return route_gdf
+
+    # Calculate distance in meters
+    distance_meters = int(route_gdf.to_crs(route_gdf.estimate_utm_crs()).length.sum())
+
+    # Calculate total travel time in seconds
+    travel_time_seconds = route_gdf["original_travel_time"].sum()
+
+    logger.info(f"Route length: {distance_meters} meters")
+    logger.info(f"Route travel time: {travel_time_seconds:.1f} seconds")
+    logger.info(route_gdf[["original_travel_time", "length"]].T.to_markdown())
+
+    return {
+        "route_gdf": route_gdf,
+        "distance_meters": distance_meters,
+        "travel_time_seconds": travel_time_seconds,
+    }
