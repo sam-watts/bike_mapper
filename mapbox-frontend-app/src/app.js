@@ -274,7 +274,7 @@ map.on('click', (e) => {
 
 function generateRoute(start, end, preferredRoutes, followingWeight) {
     console.log("Generating route!")
-    fetch(generateRouteUrl, {
+    return fetch(generateRouteUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -302,6 +302,7 @@ function generateRoute(start, end, preferredRoutes, followingWeight) {
     }).catch(error => {
         console.error('Error generating route:', error);
         alert('Error generating route. Please check if the backend server is running.');
+        throw error; // Re-throw to ensure the promise chain handles it
     });
 }
 
@@ -754,29 +755,30 @@ document.getElementById("pathGroups").onchange = function () {
 document.getElementById("generateRoute").onclick = () => {
     if (startPoint && endPoint) {
         const generateButton = document.getElementById("generateRoute");
-        try {
-            // Start pulsing animation
-            generateButton.classList.add("button-pulsing");
-            generateButton.disabled = true;
-            generateButton.textContent = "Generating Route...";
 
-            const startCoords = startPoint.getLngLat().toArray();
-            const endCoords = endPoint.getLngLat().toArray();
-            const followingWeight = document.getElementById("slider").value;
-            console.log("Following Weight:", followingWeight);
-            console.log("Start:", startCoords);
-            console.log("End:", endCoords);
-            generateRoute(startCoords, endCoords, features.map(x => x.id), followingWeight);
+        // Start pulsing animation and disable button
+        generateButton.classList.add("button-pulsing");
+        generateButton.disabled = true;
+        generateButton.textContent = "Generating Route...";
 
-        } catch (error) {
-            console.error('Error generating route:', error);
-            alert('Error generating route. Please check if the backend server is running.');
-        } finally {
-            // Stop pulsing animation
-            generateButton.classList.remove("button-pulsing");
-            generateButton.disabled = false;
-            generateButton.textContent = "Get Directions";
-        }
+        const startCoords = startPoint.getLngLat().toArray();
+        const endCoords = endPoint.getLngLat().toArray();
+        const followingWeight = document.getElementById("slider").value;
+        console.log("Following Weight:", followingWeight);
+        console.log("Start:", startCoords);
+        console.log("End:", endCoords);
+
+        // Call generateRoute and handle completion
+        generateRoute(startCoords, endCoords, features.map(x => x.id), followingWeight)
+            .then(() => {
+                // Success - reset button state
+                generateButton.classList.remove("button-pulsing");
+                generateButton.disabled = false;
+                generateButton.textContent = "Get Directions";
+            })
+            .catch((error) => {
+                console.error('Error in route generation:', error);
+            });
     } else {
         alert("Please set both start and end points.");
     }

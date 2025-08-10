@@ -363,27 +363,25 @@ button.destructive-btn:hover {
     stroke-width: 3;
 }
 
-@keyframes pulse-left-right {
+@keyframes pulse-opacity {
     0% {
-        background: linear-gradient(90deg, #1557b0 0%, #1a73e8 50%, #1557b0 100%);
-        background-size: 200% 100%;
-        background-position: 100% 0;
+        opacity: 1;
     }
 
     50% {
-        background-position: 0% 0;
+        opacity: 0.7;
     }
 
     100% {
-        background-position: 100% 0;
+        opacity: 1;
     }
 }
 
 .button-pulsing {
-    animation: pulse-left-right 1.5s ease-in-out infinite;
-    color: white;
+    animation: pulse-opacity 1.5s ease-in-out infinite;
     border: none;
-    background-color: #1a73e8;
+    background-color: #1a73e8 !important;
+    color: white !important;
 }
 
 .button-pulsing:disabled {
