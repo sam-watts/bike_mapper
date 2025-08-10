@@ -2,6 +2,10 @@ const mapboxAccessToken = 'pk.eyJ1Ijoic3dhdHRzdGd0ZyIsImEiOiJja3lvNmc5a28zMXA2Mn
 const generateRouteUrl = 'http://127.0.0.1:8000/generate_route'; // Replace with your actual API endpoint
 mapboxgl.accessToken = mapboxAccessToken;
 
+// Search state management
+let searchTimeout = null;
+let activeSearchInput = null;
+
 const map = new mapboxgl.Map({
     container: 'map', // ID of the container in index.html
     style: 'mapbox://styles/mapbox/streets-v11',
@@ -429,8 +433,195 @@ function extractIdsFromPath(pathKey) {
     return idsToSelect;
 }
 
-document.getElementById("setStart").onclick = setStart;
-document.getElementById("setEnd").onclick = setEnd;
+// Search functionality
+function setupSearchInputs() {
+    const startInput = document.getElementById('startSearch');
+    const endInput = document.getElementById('endSearch');
+    const startResults = document.getElementById('startSearchResults');
+    const endResults = document.getElementById('endSearchResults');
+
+    // Setup search for start input
+    startInput.addEventListener('input', function (e) {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+
+        if (query.length < 2) {
+            hideSearchResults(startResults);
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            performGeocoding(query, startResults, 'start');
+        }, 300);
+    });
+
+    // Setup search for end input
+    endInput.addEventListener('input', function (e) {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+
+        if (query.length < 2) {
+            hideSearchResults(endResults);
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            performGeocoding(query, endResults, 'end');
+        }, 300);
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.search-container')) {
+            hideSearchResults(startResults);
+            hideSearchResults(endResults);
+        }
+    });
+
+    // Clear results when input loses focus (but not if clicking on results)
+    startInput.addEventListener('blur', function (e) {
+        setTimeout(() => {
+            if (!startResults.contains(document.activeElement)) {
+                hideSearchResults(startResults);
+            }
+        }, 150);
+    });
+
+    endInput.addEventListener('blur', function (e) {
+        setTimeout(() => {
+            if (!endResults.contains(document.activeElement)) {
+                hideSearchResults(endResults);
+            }
+        }, 150);
+    });
+}
+
+async function performGeocoding(query, resultsContainer, pointType) {
+    try {
+        // Focus search around Edinburgh
+        const edinburghBounds = [-3.4, 55.8, -3.0, 56.0]; // [west, south, east, north]
+        const proximity = '-3.1883,55.9533'; // Edinburgh city center
+
+        const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+            `access_token=${mapboxAccessToken}&` +
+            `country=GB&` +
+            `proximity=${proximity}&` +
+            `bbox=${edinburghBounds.join(',')}&` +
+            `limit=5&` +
+            `types=address,poi,postcode,place`
+        );
+
+        if (!response.ok) {
+            throw new Error('Geocoding request failed');
+        }
+
+        const data = await response.json();
+        displaySearchResults(data.features, resultsContainer, pointType);
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        hideSearchResults(resultsContainer);
+    }
+}
+
+function displaySearchResults(features, resultsContainer, pointType) {
+    if (!features || features.length === 0) {
+        hideSearchResults(resultsContainer);
+        return;
+    }
+
+    resultsContainer.innerHTML = '';
+
+    features.forEach(feature => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'search-result-item';
+
+        const icon = getPlaceIcon(feature);
+        const mainText = feature.text || feature.place_name;
+        const secondaryText = feature.place_name.replace(feature.text + ', ', '');
+
+        resultItem.innerHTML = `
+            <span class="search-result-icon">${icon}</span>
+            <div class="search-result-text">
+                <div class="search-result-main">${mainText}</div>
+                <div class="search-result-secondary">${secondaryText}</div>
+            </div>
+        `;
+
+        resultItem.addEventListener('click', () => {
+            selectSearchResult(feature, pointType);
+            hideSearchResults(resultsContainer);
+        });
+
+        resultsContainer.appendChild(resultItem);
+    });
+
+    showSearchResults(resultsContainer);
+}
+
+function getPlaceIcon(feature) {
+    const placeType = feature.place_type?.[0] || '';
+
+    switch (placeType) {
+        case 'address':
+            return '🏠';
+        case 'poi':
+            return '📍';
+        case 'postcode':
+            return '📮';
+        case 'place':
+            return '🏘️';
+        case 'locality':
+            return '🏙️';
+        default:
+            return '📍';
+    }
+}
+
+function selectSearchResult(feature, pointType) {
+    const coordinates = feature.center;
+    const inputId = pointType === 'start' ? 'startSearch' : 'endSearch';
+    const input = document.getElementById(inputId);
+
+    // Update input with selected place name
+    input.value = feature.place_name;
+
+    // Set the marker on the map
+    if (pointType === 'start') {
+        setStartFromCoordinates(coordinates);
+    } else {
+        setEndFromCoordinates(coordinates);
+    }
+}
+
+function setStartFromCoordinates(coordinates) {
+    if (startPoint !== null) {
+        startPoint.remove();
+    }
+    startPoint = new mapboxgl.Marker({ color: 'green' })
+        .setLngLat(coordinates)
+        .addTo(map);
+}
+
+function setEndFromCoordinates(coordinates) {
+    if (endPoint !== null) {
+        endPoint.remove();
+    }
+    endPoint = new mapboxgl.Marker({ color: 'red' })
+        .setLngLat(coordinates)
+        .addTo(map);
+}
+
+function showSearchResults(resultsContainer) {
+    resultsContainer.style.display = 'block';
+}
+
+function hideSearchResults(resultsContainer) {
+    resultsContainer.style.display = 'none';
+}
+
+document.getElementById("setStartManual").onclick = setStart;
+document.getElementById("setEndManual").onclick = setEnd;
 document.getElementById("deselectAll").onclick = deselectAllRoutes;
 document.getElementById("clearRoute").onclick = clearRoute;
 document.getElementById("pathGroups").onchange = function () {
@@ -463,9 +654,14 @@ document.getElementById("generateRoute").onclick = () => {
             // Stop pulsing animation
             generateButton.classList.remove("button-pulsing");
             generateButton.disabled = false;
-            generateButton.textContent = "Generate Route";
+            generateButton.textContent = "Get Directions";
         }
     } else {
         alert("Please set both start and end points.");
     }
 };
+
+// Initialize search functionality when the page loads
+document.addEventListener('DOMContentLoaded', function () {
+    setupSearchInputs();
+});

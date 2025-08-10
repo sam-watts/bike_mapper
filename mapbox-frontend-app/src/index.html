@@ -12,26 +12,54 @@
 
 <body>
     <div id="map"></div>
-    <div id="controls">
-        <button id="setStart">Set Start Point</button>
-        <button id="setEnd">Set End Point</button>
-        <button id="generateRoute" onclick="generateRoute();">Generate Route</button>
-        <button id="deselectAll" class="destructive-btn">Deselect Preferred Routes</button>
-        <div>
-            <label for="pathGroups">Select Path Group:</label>
-            <select id="pathGroups">
-                <option value="">-- Select a path group --</option>
-            </select>
+    <!-- Search Controls (Google Maps style) -->
+    <div id="searchControls">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <span class="search-icon">📍</span>
+                <input type="text" id="startSearch" placeholder="Choose starting point"
+                    class="search-input start-input">
+                <button id="setStartManual" class="manual-select-btn"
+                    title="Click on map to set start point">🎯</button>
+            </div>
         </div>
-        <label for="slider">Preference for following: <span id="sliderValue">2 </span></label>
-        <input type="range" id="slider" min="1" max="10" value="2">
-        <script>
-            const slider = document.getElementById('slider');
-            const sliderValue = document.getElementById('sliderValue');
-            slider.addEventListener('input', function () {
-                sliderValue.textContent = this.value;
-            });
-        </script>
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🏁</span>
+                <input type="text" id="endSearch" placeholder="Choose destination" class="search-input end-input">
+                <button id="setEndManual" class="manual-select-btn" title="Click on map to set end point">🎯</button>
+            </div>
+        </div>
+        <div class="search-results" id="startSearchResults"></div>
+        <div class="search-results" id="endSearchResults"></div>
+        <div class="route-actions">
+            <button id="generateRoute" class="generate-route-btn">Get Directions</button>
+        </div>
+    </div>
+
+    <!-- Advanced Controls -->
+    <div id="controls">
+        <details class="advanced-controls" open>
+            <summary>Cycleway Options</summary>
+            <div class="advanced-content">
+                <button id="deselectAll" class="destructive-btn">Deselect Preferred Routes</button>
+                <div>
+                    <label for="pathGroups">Select Path Group:</label>
+                    <select id="pathGroups">
+                        <option value="">-- Select a path group --</option>
+                    </select>
+                </div>
+                <label for="slider">Preference for following: <span id="sliderValue">2 </span></label>
+                <input type="range" id="slider" min="1" max="10" value="2">
+                <script>
+                    const slider = document.getElementById('slider');
+                    const sliderValue = document.getElementById('sliderValue');
+                    slider.addEventListener('input', function () {
+                        sliderValue.textContent = this.value;
+                    });
+                </script>
+            </div>
+        </details>
     </div>
 
     <!-- Route Info Panel -->
