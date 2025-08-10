@@ -92,14 +92,14 @@ function loadGroupedPaths() {
         .then(response => response.json())
         .then(data => {
             groupedPaths = data;
-            populatePathGroupsDropdown(groupedPaths);
+            populatePathGroupsDropdown();
         })
         .catch(error => {
             console.error('Error loading grouped paths:', error);
         });
 }
 
-function populatePathGroupsDropdown(groupedPaths) {
+function populatePathGroupsDropdown() {
     const dropdown = document.getElementById('pathGroups');
 
     // Clear existing options except the first one
@@ -107,14 +107,52 @@ function populatePathGroupsDropdown(groupedPaths) {
         dropdown.removeChild(dropdown.lastChild);
     }
 
-    // Add options for each path group
-    Object.keys(groupedPaths).forEach(groupKey => {
-        const option = document.createElement('option');
-        option.value = groupKey;
-        // Convert underscore-separated keys to readable labels
-        option.textContent = groupKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        dropdown.appendChild(option);
-    });
+    // Add hierarchy groups first (top-level selectable items)
+    if (groupedPaths.hierarchy) {
+        Object.keys(groupedPaths.hierarchy).forEach(hierarchyKey => {
+            const option = document.createElement('option');
+            option.value = `hierarchy:${hierarchyKey}`;
+            option.textContent = hierarchyKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            option.style.fontWeight = 'bold';
+            dropdown.appendChild(option);
+
+            // Add child paths with indentation
+            const childPaths = groupedPaths.hierarchy[hierarchyKey];
+            childPaths.forEach((childPath, index) => {
+                const childOption = document.createElement('option');
+                childOption.value = `path:${childPath}`;
+                // Use tree-like characters: ├── for middle items, └── for last item
+                const isLast = index === childPaths.length - 1;
+                const treeChar = isLast ? '└──' : '├──';
+                childOption.textContent = `${treeChar} ${childPath.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+                dropdown.appendChild(childOption);
+            });
+        });
+    }
+
+    // Add a separator
+    if (groupedPaths.hierarchy && groupedPaths.paths) {
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '━━━━━━━━━━━━━━━━━━━━';
+        dropdown.appendChild(separator);
+    }
+
+    // Add individual path groups
+    if (groupedPaths.paths) {
+        Object.keys(groupedPaths.paths).forEach(pathKey => {
+            // Only add paths that are not already in hierarchy
+            const isInHierarchy = groupedPaths.hierarchy &&
+                Object.values(groupedPaths.hierarchy).some(children => children.includes(pathKey));
+
+            if (!isInHierarchy) {
+                const option = document.createElement('option');
+                option.value = `path:${pathKey}`;
+                option.textContent = pathKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                dropdown.appendChild(option);
+            }
+        });
+    }
 }
 
 map.on('load', () => {
@@ -253,29 +291,26 @@ function deselectAllRoutes() {
 }
 
 function selectPathGroup(groupKey) {
-    if (!groupKey || !groupedPaths[groupKey]) {
+    if (!groupKey) {
         return;
     }
 
-    const pathGroup = groupedPaths[groupKey];
+    let idsToSelect = [];
 
-    // Extract all IDs from the group (handling both flat arrays and nested arrays)
-    const idsToSelect = [];
-
-    if (Array.isArray(pathGroup)) {
-        pathGroup.forEach(item => {
-            if (Array.isArray(item)) {
-                // Nested array case (like st_andrews_square_to_picardy_place)
-                item.forEach(subItem => {
-                    if (subItem.id) {
-                        idsToSelect.push(subItem.id);
-                    }
-                });
-            } else if (item.id) {
-                // Flat array case (like leith_walk)
-                idsToSelect.push(item.id);
-            }
-        });
+    // Parse the groupKey to determine if it's a hierarchy or path
+    if (groupKey.startsWith('hierarchy:')) {
+        const hierarchyKey = groupKey.replace('hierarchy:', '');
+        if (groupedPaths.hierarchy && groupedPaths.hierarchy[hierarchyKey]) {
+            // Select all paths in this hierarchy
+            const childPaths = groupedPaths.hierarchy[hierarchyKey];
+            childPaths.forEach(pathKey => {
+                const pathIds = extractIdsFromPath(pathKey);
+                idsToSelect = idsToSelect.concat(pathIds);
+            });
+        }
+    } else if (groupKey.startsWith('path:')) {
+        const pathKey = groupKey.replace('path:', '');
+        idsToSelect = extractIdsFromPath(pathKey);
     }
 
     // Add these IDs to the features array and select them on the map
@@ -295,7 +330,35 @@ function selectPathGroup(groupKey) {
         }
     });
 
-    console.log(`Selected path group: ${groupKey}`, features);
+    console.log(`Selected group: ${groupKey}`, features);
+}
+
+function extractIdsFromPath(pathKey) {
+    const idsToSelect = [];
+
+    if (!groupedPaths.paths || !groupedPaths.paths[pathKey]) {
+        return idsToSelect;
+    }
+
+    const pathGroup = groupedPaths.paths[pathKey];
+
+    if (Array.isArray(pathGroup)) {
+        pathGroup.forEach(item => {
+            if (Array.isArray(item)) {
+                // Nested array case (like st_andrews_square_to_picardy_place)
+                item.forEach(subItem => {
+                    if (subItem.id) {
+                        idsToSelect.push(subItem.id);
+                    }
+                });
+            } else if (item.id) {
+                // Flat array case (like leith_walk)
+                idsToSelect.push(item.id);
+            }
+        });
+    }
+
+    return idsToSelect;
 }
 
 document.getElementById("setStart").onclick = setStart;
