@@ -54,14 +54,14 @@ function loadCycleways() {
     });
 
     fetch('data/cycleways.geojson')
-    .then(response => response.json())
-    .then(data => {
-        data.features.forEach((feature, index) => {
-            feature.id = feature.properties.id; // get the osmid from properties
+        .then(response => response.json())
+        .then(data => {
+            data.features.forEach((feature, index) => {
+                feature.id = feature.properties.id; // get the osmid from properties
+            });
+            console.log(data)
+            map.getSource('cycleways').setData(data);
         });
-        console.log(data)
-        map.getSource('cycleways').setData(data);
-    });
 
     // Add a single layer for all the lines
     map.addLayer({
@@ -132,22 +132,28 @@ map.on('mouseleave', 'cycleways-layer', () => {
 map.on('click', (e) => {
     const coordinates = e.lngLat.toArray();
     if (hoveredFeatureId !== null) {
-        features.push({
-            id: hoveredFeatureId,
-            coordinates: coordinates
-        });
-        for (let i = 0; i < features.length; i++) {
-            const feature = features[i];
-            
+        // Check if the feature is already selected
+        const existingFeatureIndex = features.findIndex(feature => feature.id === hoveredFeatureId);
+
+        if (existingFeatureIndex !== -1) {
+            // Feature is already selected, so deselect it
+            features.splice(existingFeatureIndex, 1);
             map.setFeatureState(
-                { source: 'cycleways', id: feature.id },
+                { source: 'cycleways', id: hoveredFeatureId },
+                { selected: false }
+            );
+        } else {
+            // Feature is not selected, so select it
+            features.push({
+                id: hoveredFeatureId,
+                coordinates: coordinates
+            });
+            map.setFeatureState(
+                { source: 'cycleways', id: hoveredFeatureId },
                 { selected: true }
             );
         }
-        // TODO: the way this currently works, we cannot deselect a feature
-        // by clicking on it again. We could add a check to see if the feature
-        // is already selected and then remove it from the features array
-        // and set the state to false.
+
         console.log(features);
     }
 });
@@ -159,7 +165,7 @@ function generateRoute(start, end, preferredRoutes, followingWeight) {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ start: start, end: end, following_weight: followingWeight, preferred_routes: preferredRoutes})
+        body: JSON.stringify({ start: start, end: end, following_weight: followingWeight, preferred_routes: preferredRoutes })
     }).then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -183,8 +189,8 @@ function setStart() {
             startPoint.remove()
         }
         startPoint = new mapboxgl.Marker({ color: 'green' })
-                .setLngLat(e.lngLat.toArray())
-                .addTo(map);
+            .setLngLat(e.lngLat.toArray())
+            .addTo(map);
         map.getCanvas().style.cursor = ''; // Reset cursor
     });
 }
@@ -196,8 +202,8 @@ function setEnd() {
             endPoint.remove()
         }
         endPoint = new mapboxgl.Marker({ color: 'red' })
-                .setLngLat(e.lngLat.toArray())
-                .addTo(map);
+            .setLngLat(e.lngLat.toArray())
+            .addTo(map);
         map.getCanvas().style.cursor = ''; // Reset cursor
     });
 }
@@ -212,7 +218,7 @@ document.getElementById("generateRoute").onclick = () => {
             generateButton.classList.add("button-pulsing");
             generateButton.disabled = true;
             generateButton.textContent = "Generating Route...";
-    
+
             const startCoords = startPoint.getLngLat().toArray();
             const endCoords = endPoint.getLngLat().toArray();
             const followingWeight = document.getElementById("slider").value;
