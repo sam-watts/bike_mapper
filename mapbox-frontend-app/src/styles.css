@@ -387,3 +387,175 @@ button.destructive-btn:hover {
 .button-pulsing:disabled {
     opacity: 0.8;
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+
+    /* Search Controls - Mobile */
+    #searchControls {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-width: none;
+    }
+
+    .search-input-wrapper {
+        border-radius: 6px;
+    }
+
+    .search-icon {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .search-input {
+        padding: 10px 6px;
+        font-size: 14px;
+    }
+
+    .manual-select-btn {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .search-results {
+        border-radius: 0 0 6px 6px;
+        max-height: 150px;
+    }
+
+    .search-result-item {
+        padding: 10px 12px;
+    }
+
+    .search-result-icon {
+        margin-right: 8px;
+        font-size: 12px;
+    }
+
+    .search-result-main {
+        font-size: 14px;
+    }
+
+    .search-result-secondary {
+        font-size: 12px;
+    }
+
+    .generate-route-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 20px;
+    }
+
+    /* Advanced Controls - Mobile */
+    #controls {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+
+    .advanced-controls summary {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .advanced-content {
+        padding: 0 12px 12px;
+    }
+
+    .advanced-content button {
+        padding: 10px 16px;
+        font-size: 14px;
+        width: 100%;
+        margin: 6px 0;
+    }
+
+    .advanced-content label {
+        font-size: 13px;
+        margin: 6px 0 3px;
+    }
+
+    .advanced-content select {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    /* Route Info Panel - Mobile */
+    .route-info {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+        padding: 12px;
+    }
+
+    .route-info-header h3 {
+        font-size: 14px;
+    }
+
+    .clear-route-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .stat-label,
+    .stat-value {
+        font-size: 12px;
+    }
+
+    .export-gpx-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Extra small mobile devices */
+    #searchControls {
+        top: 5px;
+        left: 5px;
+        right: 5px;
+    }
+
+    .search-input {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 12px 8px;
+    }
+
+    .search-icon {
+        padding: 12px 8px;
+    }
+
+    .manual-select-btn {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .generate-route-btn {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    #controls {
+        bottom: 5px;
+        left: 5px;
+        right: 5px;
+    }
+
+    .route-info {
+        top: 5px;
+        right: 5px;
+        left: 5px;
+        padding: 10px;
+    }
+
+    .advanced-content button {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+}
