@@ -58,7 +58,7 @@ function loadCycleways() {
         }
     });
 
-    fetch('data/cycleways_filtered.geojson')
+    fetch('mapbox-frontend-app/src/data/cycleways_filtered.geojson')
         .then(response => response.json())
         .then(data => {
             data.features.forEach((feature, index) => {
@@ -132,7 +132,7 @@ function filterCyclewaysByGroupedPaths(geojsonData) {
 }
 
 function loadGroupedPaths() {
-    fetch('data/grouped_paths.json')
+    fetch('mapbox-frontend-app/src/data/grouped_paths.json')
         .then(response => response.json())
         .then(data => {
             groupedPaths = data;
