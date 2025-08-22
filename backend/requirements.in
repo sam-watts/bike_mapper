@@ -1,0 +1,17 @@
+contextily
+ipykernel
+fastapi[standard]
+uvicorn
+pydantic
+diskcache
+pip
+osmnx
+numpy
+pandas
+networkx
+geopandas
+matplotlib
+scipy
+scikit-learn
+tabulate
+tqdm
