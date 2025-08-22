@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import time
 from fastapi import FastAPI
@@ -20,6 +21,7 @@ BASE_SPEED_KPH = 5
 PLACE_NAME = "Edinburgh, Scotland"
 CACHE_GRAPH = True
 WEB_MERCARTOR_CRS = 3857
+IS_PROD = "RAILWAY_ENVIRONMENT_ID" in os.environ
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,7 +45,7 @@ async def lifespan(app: FastAPI):
     t0 = time.time()
     logger.info("Loading graph...")
 
-    if CACHE_GRAPH and Path("../dev_cache").exists():
+    if CACHE_GRAPH and Path("../dev_cache").exists() and not IS_PROD:
         logger.info("Loading cached graph from dev_cache")
         cache = Cache("../dev_cache")
         GRAPH = cache.get("graph")
@@ -52,7 +54,7 @@ async def lifespan(app: FastAPI):
 
         GT_ROUTER = create_router_from_networkx(GRAPH)
 
-    elif CACHE_GRAPH:
+    elif CACHE_GRAPH and not IS_PROD:
         logger.info("Caching graph to dev_cache")
         cache = Cache("../dev_cache")
         GRAPH, GRAPH_LOOKUP = get_graph(PLACE_NAME, BASE_SPEED_KPH)
