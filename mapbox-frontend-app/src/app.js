@@ -1,5 +1,5 @@
 const mapboxAccessToken = 'pk.eyJ1Ijoic3dhdHRzNDQ1IiwiYSI6ImNtZTY1ZTB4bzBmamoyanNidDk5dDkzdTEifQ.i7ajHgWOMuMgDQTn0Uk_VA';
-const generateRouteUrl = 'http://127.0.0.1:8000/generate_route'; // Replace with your actual API endpoint
+const generateRouteUrl = 'https://bikemapper-production.up.railway.app/generate_route';
 mapboxgl.accessToken = mapboxAccessToken;
 
 // Search state management
