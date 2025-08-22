@@ -1,12 +1,14 @@
-FROM python:3.12-slim
+FROM ghcr.io/prefix-dev/pixi:latest
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy pixi configuration files
+COPY pixi.toml pixi.lock pyproject.toml ./
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies using pixi
+RUN pixi install --frozen
 
 COPY . .
 EXPOSE 8000
 
-CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["pixi", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
