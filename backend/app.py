@@ -4,7 +4,9 @@ import sys
 import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
 import pandas as pd
+import geopandas as gpd
 from pydantic import BaseModel
 import osmnx as ox
 import networkx as nx
@@ -88,13 +90,60 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(debug=True, lifespan=lifespan)
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+
+# Middleware to log all requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    exception_raised = False
+    logger.info(f"Incoming request: {request.method} {request.url}")
+
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}", exc_info=True)
+        exception_raised = True
+    finally:
+        duration = time.time() - start_time
+        status_string = "completed" if not exception_raised else "failed"
+        logger.info(
+            f"Request {status_string} | {request.method} {request.url.path} | duration: {duration:.2f} seconds"
+        )
+
+    return response
+
+
+if IS_PROD:
+    # Production: Only allow your frontend domain
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "https://sam-watts.github.io/bike_mapper"
+        ],  # Replace with your actual frontend URL
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],  # Only allow needed methods
+        allow_headers=["content-type"],  # Only allow needed headers
+    )
+else:
+    # Development: Allow localhost for testing
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5000",
+            "http://localhost:3000",
+        ],  # Your dev frontend URLs
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify the service is ready."""
+    if GT_ROUTER is None:
+        return {"status": "error", "message": "GT_ROUTER not initialized"}
+    return {"status": "ok", "message": "Service is healthy"}
 
 
 @app.post("/generate_route")
@@ -215,7 +264,6 @@ def get_route_gt(
 
     logger.info(f"Route length: {distance_meters} meters")
     logger.info(f"Route travel time: {travel_time_seconds:.1f} seconds")
-    logger.info(route_gdf[["original_travel_time", "length"]].T.to_markdown())
 
     return {
         "route_gdf": route_gdf,
