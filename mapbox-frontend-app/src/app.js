@@ -1,5 +1,7 @@
 const mapboxAccessToken = 'pk.eyJ1Ijoic3dhdHRzNDQ1IiwiYSI6ImNtZTY1ZTB4bzBmamoyanNidDk5dDkzdTEifQ.i7ajHgWOMuMgDQTn0Uk_VA';
-const generateRouteUrl = 'https://bikemapper-production.up.railway.app/generate_route';
+const isProd = window.location.hostname !== 'localhost';
+const generateRouteUrl = isProd ? 'https://bikemapper-production.up.railway.app/generate_route' : 'http://localhost:8000/generate_route';
+
 mapboxgl.accessToken = mapboxAccessToken;
 
 // Search state management
@@ -814,6 +816,9 @@ document.getElementById("generateRoute").onclick = () => {
             })
             .catch((error) => {
                 console.error('Error in route generation:', error);
+                generateButton.classList.remove("button-pulsing");
+                generateButton.disabled = false;
+                generateButton.textContent = "Get Directions";
             });
     } else {
         alert("Please set both start and end points.");
