@@ -5,6 +5,7 @@ import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
+from fastapi.responses import JSONResponse
 import pandas as pd
 import geopandas as gpd
 from pydantic import BaseModel
@@ -31,6 +32,8 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 logger = logging.getLogger(__name__)
+# Set OSMnx logging to INFO and add to our logger
+logging.getLogger("osmnx").setLevel(logging.INFO)
 
 
 class RouteRequest(BaseModel):
@@ -142,8 +145,8 @@ else:
 async def health_check():
     """Health check endpoint to verify the service is ready."""
     if GT_ROUTER is None:
-        return {"status": "error", "message": "GT_ROUTER not initialized"}
-    return {"status": "ok", "message": "Service is healthy"}
+        return JSONResponse(status_code=503, content={"status": "error", "message": "Service not ready"})
+    return JSONResponse(status_code=200, content={"status": "ok", "message": "Service is healthy"})
 
 
 @app.post("/generate_route")
