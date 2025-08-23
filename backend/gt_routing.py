@@ -270,6 +270,7 @@ class GraphToolRouter:
 
         # Create GeoDataFrame
         gdf = gpd.GeoDataFrame(edges_data, crs="EPSG:4326")
+        gdf = gdf.set_geometry("geometry")
         return gdf
 
     def set_edge_speeds(self, speeds: Dict[Tuple[int, int, int], float]):
