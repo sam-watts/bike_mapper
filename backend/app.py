@@ -118,7 +118,7 @@ if IS_PROD:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://sam-watts.github.io/bike_mapper"
+            "https://sam-watts.github.io"
         ],  # Replace with your actual frontend URL
         allow_credentials=True,
         allow_methods=["GET", "POST"],  # Only allow needed methods
