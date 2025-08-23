@@ -106,6 +106,7 @@ async def log_requests(request: Request, call_next):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         exception_raised = True
+        response = JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
     finally:
         duration = time.time() - start_time
         status_string = "completed" if not exception_raised else "failed"
@@ -133,8 +134,7 @@ else:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "http://localhost:5000",
-            "http://localhost:3000",
+            "*"
         ],  # Your dev frontend URLs
         allow_credentials=True,
         allow_methods=["*"],
